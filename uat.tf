@@ -9,6 +9,17 @@ terraform {
       source = "hashicorp/aws"
       version = "4.13.0"
     }
+
+    cloudflare = {
+      source = "cloudflare/cloudflare"
+      version = "~> 3.0"
+    }
+  }
+
+  backend "s3" {
+    bucket = "nzsl-infrastructure-terraform-state"
+    region = "ap-southeast-2"
+    key = "signbank/uat.tfstate"
   }
 }
 
@@ -20,14 +31,41 @@ terraform {
 # * Netrc: credentials will be sourced from the .netrc file in your home directory
 provider "heroku" {}
 
+##
+# The Cloudflare provider offers different means of providing credentials for authentication:
+# * email - (Optional) The email associated with the account.
+#           This can also be specified with the CLOUDFLARE_EMAIL shell environment variable.
+# * api_key - (Optional) The Cloudflare API key.
+#             This can also be specified with the CLOUDFLARE_API_KEY shell environment variable.
+# * api_token - (Optional) The Cloudflare API Token. This can also be specified with the CLOUDFLARE_API_TOKEN shell environment variable.
+# .             This is an alternative to email+api_key. If both are specified, api_token will be used over email+api_key fields.
+provider "cloudflare" {}
+
 provider "aws" {
   region = "ap-southeast-2"
 }
 
+data "cloudflare_zone" "root" {
+  name = "signbank.nz"
+}
+
 resource "heroku_app" "app" {
-	name = "nzsl_signbank_uat"
+	name = "nzsl-signbank-uat"
 	region = "us"
 	stack = "container"
+}
+
+resource "heroku_domain" "app" {
+  app_id = heroku_app.app.id
+  hostname = "app-uat.${data.cloudflare_zone.root.name}"
+}
+
+resource "cloudflare_record" "app" {
+  zone_id = data.cloudflare_zone.root.zone_id
+  name    = "app-uat"
+  value   = heroku_domain.app.cname
+  type    = "CNAME"
+  ttl     = 3600
 }
 
 # Create a database, and configure the app to use it
@@ -65,10 +103,10 @@ resource "aws_s3_bucket_policy" "media" {
           "s3:PutObjectAcl"
         ],
         "Principal": {
-          "AWS": "${aws_iam_user.app.id}"
+          "AWS": "${aws_iam_user.app.arn}"
         },
         "Resource": [
-          "${aws_s3_bucket.media.bucket}/*",
+          "${aws_s3_bucket.media.arn}/*",
         ]
       }
     ]

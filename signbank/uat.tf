@@ -48,11 +48,19 @@ provider "aws" {
 data "cloudflare_zone" "root" {
   name = "signbank.nz"
 }
-
 resource "heroku_app" "app" {
 	name = "nzsl-signbank-uat"
 	region = "us"
 	stack = "container"
+
+  config_vars = {
+    "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id
+  }
+
+  sensitive_config_vars = {
+    "AWS_ACCESS_KEY_ID" = aws_iam_access_key.app.id,
+    "AWS_SECRET_ACCESS_KEY" = aws_iam_access_key.app.secret
+  }
 }
 
 resource "heroku_domain" "app" {
@@ -65,7 +73,8 @@ resource "cloudflare_record" "app" {
   name    = "app-uat"
   value   = heroku_domain.app.cname
   type    = "CNAME"
-  ttl     = 3600
+  proxied = true
+  ttl     = 1
 }
 
 # Create a database, and configure the app to use it
@@ -85,6 +94,10 @@ resource "aws_s3_bucket_acl" "media" {
 
 resource "aws_iam_user" "app" {
 	name = "signbank-app"
+}
+
+resource "aws_iam_access_key" "app" {
+  user = aws_iam_user.app.name
 }
 
 resource "aws_s3_bucket_policy" "media" {

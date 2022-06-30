@@ -2,16 +2,16 @@
 terraform {
   required_providers {
     heroku = {
-      source = "heroku/heroku"
+      source  = "heroku/heroku"
       version = "5.0.2"
     }
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "4.13.0"
     }
 
     cloudflare = {
-      source = "cloudflare/cloudflare"
+      source  = "cloudflare/cloudflare"
       version = "~> 3.0"
     }
   }
@@ -19,7 +19,18 @@ terraform {
   backend "s3" {
     bucket = "nzsl-infrastructure-terraform-state"
     region = "ap-southeast-2"
-    key = "signbank/uat.tfstate"
+    key    = "signbank/uat.tfstate"
+  }
+}
+
+variable "default_tags" {
+  type = map
+  description = "Common tags applied to all AWS resources"
+  default = {
+    Environment = "uat"
+    Client = "DSRU"
+    Project = "NZSL Signbank"
+    ProvisioningTool = "Terraform"
   }
 }
 
@@ -46,31 +57,35 @@ provider "aws" {
 }
 
 data "cloudflare_zone" "root" {
-  name = "signbank.nz"
+  name = "nzsl.nz"
 }
 resource "heroku_app" "app" {
-	name = "nzsl-signbank-uat"
-	region = "us"
-	stack = "container"
+  name   = "nzsl-signbank-uat"
+  region = "us"
+  stack  = "container"
 
   config_vars = {
     "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id
   }
 
   sensitive_config_vars = {
-    "AWS_ACCESS_KEY_ID" = aws_iam_access_key.app.id,
+    "AWS_ACCESS_KEY_ID"     = aws_iam_access_key.app.id,
     "AWS_SECRET_ACCESS_KEY" = aws_iam_access_key.app.secret
+  }
+
+  organization {
+    name = "ackama"
   }
 }
 
 resource "heroku_domain" "app" {
-  app_id = heroku_app.app.id
-  hostname = "app-uat.${data.cloudflare_zone.root.name}"
+  app_id   = heroku_app.app.id
+  hostname = "signbank-uat.${data.cloudflare_zone.root.name}"
 }
 
 resource "cloudflare_record" "app" {
   zone_id = data.cloudflare_zone.root.zone_id
-  name    = "app-uat"
+  name    = "signbank-uat"
   value   = heroku_domain.app.cname
   type    = "CNAME"
   proxied = true
@@ -85,6 +100,7 @@ resource "heroku_addon" "database" {
 
 resource "aws_s3_bucket" "media" {
   bucket = "nzsl-signbank-media-uat"
+  tags = var.default_tags
 }
 
 resource "aws_s3_bucket_acl" "media" {
@@ -93,7 +109,8 @@ resource "aws_s3_bucket_acl" "media" {
 }
 
 resource "aws_iam_user" "app" {
-	name = "signbank-app"
+  name = "signbank-app-uat"
+  tags = var.default_tags
 }
 
 resource "aws_iam_access_key" "app" {
@@ -101,28 +118,28 @@ resource "aws_iam_access_key" "app" {
 }
 
 resource "aws_s3_bucket_policy" "media" {
-	bucket = aws_s3_bucket.media.id
-	policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
+  bucket = aws_s3_bucket.media.id
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
       {
-        "Sid": "MediaBucket-Access",
-        "Effect": "Allow",
-        "Action": [
+        "Sid" : "MediaBucket-Access",
+        "Effect" : "Allow",
+        "Action" : [
           "s3:PutObject",
           "s3:GetObjectAcl",
           "s3:GetObject",
           "s3:DeleteObject",
           "s3:PutObjectAcl"
         ],
-        "Principal": {
-          "AWS": "${aws_iam_user.app.arn}"
+        "Principal" : {
+          "AWS" : "${aws_iam_user.app.arn}"
         },
-        "Resource": [
+        "Resource" : [
           "${aws_s3_bucket.media.arn}/*",
         ]
       }
     ]
-	})
+  })
 }
 

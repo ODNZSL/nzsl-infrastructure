@@ -36,3 +36,5 @@ terraform.rc
 # Ignore .env files
 
 .env
+*.lock.hcl
+*.tfplan

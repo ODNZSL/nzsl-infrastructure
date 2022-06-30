@@ -23,6 +23,17 @@ terraform {
   }
 }
 
+variable "default_tags" {
+  type = map
+  description = "Common tags applied to all AWS resources"
+  default = {
+    Environment = "production"
+    Client = "DSRU"
+    Project = "NZSL Signbank"
+    ProvisioningTool = "Terraform"
+  }
+}
+
 ##
 # The Heroku provider offers a flexible means of providing credentials for authentication.
 # The following methods are supported, listed in order of precedence, and explained below:
@@ -46,7 +57,7 @@ provider "aws" {
 }
 
 data "cloudflare_zone" "root" {
-  name = "signbank.nz"
+  name = "nzsl.nz"
 }
 resource "heroku_app" "app" {
   name   = "nzsl-signbank-production"
@@ -54,23 +65,28 @@ resource "heroku_app" "app" {
   stack  = "container"
 
   config_vars = {
-    "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id
+    "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id,
+    "ALLOWED_HOSTS" = "signbank.${data.cloudflare_zone.root.name}"
   }
 
   sensitive_config_vars = {
     "AWS_ACCESS_KEY_ID"     = aws_iam_access_key.app.id,
     "AWS_SECRET_ACCESS_KEY" = aws_iam_access_key.app.secret
   }
+
+  organization {
+    name = "ackama"
+  }
 }
 
 resource "heroku_domain" "app" {
   app_id   = heroku_app.app.id
-  hostname = "app.${data.cloudflare_zone.root.name}"
+  hostname = "signbank.${data.cloudflare_zone.root.name}"
 }
 
 resource "cloudflare_record" "app" {
   zone_id = data.cloudflare_zone.root.zone_id
-  name    = "app"
+  name    = "signbank"
   value   = heroku_domain.app.cname
   type    = "CNAME"
   proxied = true
@@ -85,6 +101,7 @@ resource "heroku_addon" "database" {
 
 resource "aws_s3_bucket" "media" {
   bucket = "nzsl-signbank-media-production"
+  tags = var.default_tags
 }
 
 resource "aws_s3_bucket_acl" "media" {
@@ -93,7 +110,8 @@ resource "aws_s3_bucket_acl" "media" {
 }
 
 resource "aws_iam_user" "app" {
-  name = "signbank-app"
+  name = "signbank-app-production"
+  tags = var.default_tags
 }
 
 resource "aws_iam_access_key" "app" {

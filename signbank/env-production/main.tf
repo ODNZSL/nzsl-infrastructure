@@ -67,6 +67,7 @@ resource "heroku_app" "app" {
   config_vars = {
     "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id,
     "ALLOWED_HOSTS" = "signbank.${data.cloudflare_zone.root.name}"
+    "DJANGO_SETTINGS_MODULE" = "signbank.settings.production"
   }
 
   sensitive_config_vars = {

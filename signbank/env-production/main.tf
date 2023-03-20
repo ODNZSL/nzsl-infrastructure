@@ -110,6 +110,23 @@ resource "aws_s3_bucket_acl" "media" {
   acl    = "private"
 }
 
+resource "aws_s3_bucket_cors_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET"]
+    allowed_origins = [
+      "http://localhost:3000",
+      "https://*.nzslshare.nz",
+      "https://*.nzsl.nz",
+      "https://nzsl-staging.herokuapp.com"
+    ]
+    expose_headers  = []
+    max_age_seconds = 3000
+  }
+}
+
 resource "aws_iam_user" "app" {
   name = "signbank-app-production"
   tags = var.default_tags

@@ -28,6 +28,19 @@ locals {
   }
 }
 
+data "aws_iam_policy_document" "write_only_access" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl"
+    ]
+    resources = [
+      "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/nzsl.db"
+    ]
+  }
+}
+
 module "bucket_access" {
   source       = "../../modules/readonly_bucket_access"
   default_tags = local.default_tags
@@ -42,6 +55,7 @@ module "github_oidc_role" {
   github_org_name             = "odnzsl"
   github_repo_name            = "nzsl-dictionary-scripts"
   allowed_oidc_subject_claims = ["environment:Production"]
+  iam_policy_document_json    = data.aws_iam_policy_document.write_only_access.json
 }
 
 output "aws_access_key_id" {

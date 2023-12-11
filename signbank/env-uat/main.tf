@@ -24,12 +24,12 @@ terraform {
 }
 
 variable "default_tags" {
-  type = map
+  type        = map(any)
   description = "Common tags applied to all AWS resources"
   default = {
-    Environment = "uat"
-    Client = "DSRU"
-    Project = "NZSL Signbank"
+    Environment      = "uat"
+    Client           = "DSRU"
+    Project          = "NZSL Signbank"
     ProvisioningTool = "Terraform"
   }
 }
@@ -100,7 +100,7 @@ resource "heroku_addon" "database" {
 
 resource "aws_s3_bucket" "media" {
   bucket = "nzsl-signbank-media-uat"
-  tags = var.default_tags
+  tags   = var.default_tags
 }
 
 resource "aws_s3_bucket_acl" "media" {

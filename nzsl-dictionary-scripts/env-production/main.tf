@@ -1,9 +1,8 @@
-
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "4.13.0"
+      version = "~> 4.13"
     }
   }
 
@@ -14,9 +13,11 @@ terraform {
   }
 }
 
-provider "aws" {
   region = "ap-southeast-2"
-}
+
+  default_tags {
+    tags = local.default_tags
+  }
 
 locals {
   app_name_pascal_case = "NZSLDictionaryScriptsProductionDeployment"

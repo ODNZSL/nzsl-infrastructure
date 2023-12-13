@@ -23,7 +23,7 @@ resource "aws_s3_bucket_policy" "access" {
           "AWS" : "${aws_iam_user.access.arn}"
         },
         "Resource" : [
-          "${var.bucket_name}/*",
+          "arn:aws:s3:::${var.bucket_name}/*",
         ]
       }
     ]

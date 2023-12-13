@@ -46,9 +46,9 @@ data "aws_iam_policy_document" "write_only_access" {
 
 
 module "bucket_access" {
-  source       = "../../modules/readonly_bucket_access"
-  user_name    = "${local.app_name_pascal_case}User"
-  bucket_name  = "nzsl-signbank-media-uat"
+  source      = "../../modules/readonly_bucket_access"
+  user_name   = "${local.app_name_pascal_case}User"
+  bucket_name = "nzsl-signbank-media-uat"
 }
 
 module "github_oidc_role" {

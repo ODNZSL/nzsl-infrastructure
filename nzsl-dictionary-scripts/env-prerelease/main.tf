@@ -47,7 +47,6 @@ data "aws_iam_policy_document" "write_only_access" {
 
 module "bucket_access" {
   source       = "../../modules/readonly_bucket_access"
-  default_tags = local.default_tags
   user_name    = "${local.app_name_pascal_case}User"
   bucket_name  = "nzsl-signbank-media-uat"
 }

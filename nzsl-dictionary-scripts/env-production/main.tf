@@ -53,7 +53,7 @@ module "github_oidc_role" {
   source = "../../modules/github_oidc_role"
 
   name_prefix_pascal_case     = local.app_name_pascal_case
-  github_org_name             = "odnzsl"
+  github_org_name             = "ODNZSL"
   github_repo_name            = "nzsl-dictionary-scripts"
   allowed_oidc_subject_claims = ["environment:Production"]
   iam_policy_document_json    = data.aws_iam_policy_document.write_only_access.json

@@ -24,12 +24,12 @@ terraform {
 }
 
 variable "default_tags" {
-  type = map
+  type        = map(any)
   description = "Common tags applied to all AWS resources"
   default = {
-    Environment = "production"
-    Client = "DSRU"
-    Project = "NZSL Signbank"
+    Environment      = "production"
+    Client           = "DSRU"
+    Project          = "NZSL Signbank"
     ProvisioningTool = "Terraform"
   }
 }
@@ -66,8 +66,8 @@ resource "heroku_app" "app" {
 
   config_vars = {
     "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id,
-    "ALLOWED_HOSTS" = "signbank.${data.cloudflare_zone.root.name}"
-    "DJANGO_SETTINGS_MODULE" = "signbank.settings.production"
+    "ALLOWED_HOSTS"           = "signbank.${data.cloudflare_zone.root.name}"
+    "DJANGO_SETTINGS_MODULE"  = "signbank.settings.production"
   }
 
   sensitive_config_vars = {
@@ -102,7 +102,7 @@ resource "heroku_addon" "database" {
 
 resource "aws_s3_bucket" "media" {
   bucket = "nzsl-signbank-media-production"
-  tags = var.default_tags
+  tags   = var.default_tags
 }
 
 resource "aws_s3_bucket_acl" "media" {

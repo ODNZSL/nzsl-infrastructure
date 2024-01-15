@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "write_only_access" {
       "s3:PutObjectAcl"
     ]
     resources = [
-      "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/nzsl.db"
+      "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/production/nzsl.db"
     ]
   }
 }

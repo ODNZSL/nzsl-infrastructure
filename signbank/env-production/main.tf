@@ -76,7 +76,7 @@ resource "heroku_app" "app" {
   }
 
   organization {
-    name = "ackama"
+    name = "nzsl"
   }
 }
 
@@ -97,7 +97,7 @@ resource "cloudflare_record" "app" {
 # Create a database, and configure the app to use it
 resource "heroku_addon" "database" {
   app_id = heroku_app.app.id
-  plan   = "heroku-postgresql:hobby-basic"
+  plan   = "heroku-postgresql:basic"
 }
 
 resource "aws_s3_bucket" "media" {

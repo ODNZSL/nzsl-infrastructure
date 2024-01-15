@@ -76,7 +76,7 @@ resource "heroku_app" "app" {
   }
 
   organization {
-    name = "ackama"
+    name = "nzsl"
   }
 }
 
@@ -97,7 +97,7 @@ resource "cloudflare_record" "app" {
 # Create a database, and configure the app to use it
 resource "heroku_addon" "database" {
   app_id = heroku_app.app.id
-  plan   = "heroku-postgresql:hobby-basic"
+  plan   = "heroku-postgresql:basic"
 }
 
 resource "aws_s3_bucket" "media" {
@@ -145,13 +145,20 @@ resource "null_resource" "schedule_backups" {
   }
 }
 
-resource "aws_s3_bucket_policy" "media" {
-  bucket = aws_s3_bucket.media.id
+resource "aws_iam_user_policy_attachment" "media" {
+  user       = aws_iam_user.app.name
+  policy_arn = aws_iam_policy.media.arn
+}
+
+resource "aws_iam_policy" "media" {
+  name        = "SignbankProductionMediaBucketAccessPolicy"
+  description = "IAM policy for accessing the media bucket"
+
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
-        "Sid" : "MediaBucket-Access",
+        "Sid" : "SignbankProductionMediaBucketAccess",
         "Effect" : "Allow",
         "Action" : [
           "s3:PutObject",
@@ -160,11 +167,8 @@ resource "aws_s3_bucket_policy" "media" {
           "s3:DeleteObject",
           "s3:PutObjectAcl"
         ],
-        "Principal" : {
-          "AWS" : "${aws_iam_user.app.arn}"
-        },
         "Resource" : [
-          "${aws_s3_bucket.media.arn}/*",
+          "${aws_s3_bucket.media.arn}/*"
         ]
       }
     ]

@@ -117,13 +117,20 @@ resource "aws_iam_access_key" "app" {
   user = aws_iam_user.app.name
 }
 
-resource "aws_s3_bucket_policy" "media" {
-  bucket = aws_s3_bucket.media.id
+resource "aws_iam_user_policy_attachment" "media" {
+  user       = aws_iam_user.app.name
+  policy_arn = aws_iam_policy.media.arn
+}
+
+resource "aws_iam_policy" "media" {
+  name        = "SignbankUATMediaBucketAccessPolicy"
+  description = "IAM policy for accessing the media bucket"
+
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
-        "Sid" : "MediaBucket-Access",
+        "Sid" : "SignbankUATMediaBucketAccess",
         "Effect" : "Allow",
         "Action" : [
           "s3:PutObject",
@@ -132,11 +139,8 @@ resource "aws_s3_bucket_policy" "media" {
           "s3:DeleteObject",
           "s3:PutObjectAcl"
         ],
-        "Principal" : {
-          "AWS" : "${aws_iam_user.app.arn}"
-        },
         "Resource" : [
-          "${aws_s3_bucket.media.arn}/*",
+          "${aws_s3_bucket.media.arn}/*"
         ]
       }
     ]

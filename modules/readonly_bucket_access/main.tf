@@ -14,7 +14,7 @@ resource "aws_s3_bucket_policy" "access" {
     "Version" : "2012-10-17",
     "Statement" : [
       {
-        "Sid" : "MediaBucket-Access",
+        "Sid" : "${var.user_name}ReadonlyBucketAccess",
         "Effect" : "Allow",
         "Action" : [
           "s3:GetObject",

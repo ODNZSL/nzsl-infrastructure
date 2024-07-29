@@ -95,7 +95,7 @@ resource "cloudflare_record" "app" {
 # Create a database, and configure the app to use it
 resource "heroku_addon" "database" {
   app_id = heroku_app.app.id
-  plan   = "heroku-postgresql:basic"
+  plan   = "heroku-postgresql:essential-0"
 }
 
 resource "aws_s3_bucket" "media" {
@@ -146,4 +146,3 @@ resource "aws_iam_policy" "media" {
     ]
   })
 }
-

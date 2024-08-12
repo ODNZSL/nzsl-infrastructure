@@ -99,13 +99,13 @@ data "aws_iam_policy_document" "bucket_access_policy" {
   policy_id = "EnforceSSLRequests"
 
   statement {
-    sid    = "AllowAccessToSite"
-    effect = "Allow"
+    sid     = "AllowAccessToSite"
+    effect  = "Allow"
     actions = ["s3:GetObject"]
 
     principals {
       identifiers = ["*"]
-      type = "*"
+      type        = "*"
     }
 
     condition {
@@ -121,13 +121,13 @@ data "aws_iam_policy_document" "bucket_access_policy" {
   }
 
   statement {
-    sid    = "AllowSSLRequestsOnly"
-    effect = "Deny"
+    sid     = "AllowSSLRequestsOnly"
+    effect  = "Deny"
     actions = ["s3:*"]
 
     principals {
       identifiers = ["*"]
-      type = "*"
+      type        = "*"
     }
 
     condition {
@@ -149,7 +149,7 @@ data "aws_iam_policy_document" "bucket_access_policy" {
     actions = ["s3:GetObject"]
 
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = ["cloudfront.amazonaws.com"]
     }
 
@@ -158,7 +158,7 @@ data "aws_iam_policy_document" "bucket_access_policy" {
     condition {
       variable = "AWS:SourceArn"
       test     = "StringEquals"
-      values = [aws_cloudfront_distribution.cdn.arn]
+      values   = [aws_cloudfront_distribution.cdn.arn]
     }
   }
 }
@@ -216,10 +216,10 @@ resource "aws_cloudfront_distribution" "cdn" {
     origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
   }
 
-  enabled         = true
-  is_ipv6_enabled = true
-  http_version    = "http2and3"
-  price_class     = "PriceClass_All"
+  enabled             = true
+  is_ipv6_enabled     = true
+  http_version        = "http2and3"
+  price_class         = "PriceClass_All"
   default_root_object = "index.html"
 
   aliases = [
@@ -227,8 +227,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   ]
 
   default_cache_behavior {
-    allowed_methods = ["GET", "HEAD"]
-    cached_methods = ["GET", "HEAD"]
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
     target_origin_id = aws_s3_bucket.hosting.bucket_regional_domain_name
 
     viewer_protocol_policy = "redirect-to-https"
@@ -247,7 +247,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   restrictions {
     geo_restriction {
       restriction_type = "none"
-      locations = []
+      locations        = []
     }
   }
 

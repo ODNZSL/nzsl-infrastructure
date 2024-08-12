@@ -179,14 +179,20 @@ resource "aws_s3_bucket_policy" "hosting" {
 # DNS zone and records
 ################################################################################
 
-data "aws_acm_certificate" "cloudfront_cert" {
-  domain = "learn.nzsl.nz"
-
-  provider = aws.us-east-1
-}
-
 data "cloudflare_zone" "root" {
   name = "nzsl.nz"
+}
+
+module "cert" {
+  source = "../../../modules/acm/validated_with_cloudflare"
+
+  primary_domain_name     = "learn.nzsl.nz"
+  primary_domain_zone_id  = data.cloudflare_zone.root.id
+  name_prefix_pascal_case = "${local.app_name_pascal_case}CloudFront"
+
+  providers = {
+    aws = aws.us-east-1
+  }
 }
 
 resource "cloudflare_record" "app" {
@@ -253,7 +259,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = data.aws_acm_certificate.cloudfront_cert.arn
+    acm_certificate_arn      = module.cert.arn
     minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
   }

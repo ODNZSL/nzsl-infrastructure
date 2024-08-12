@@ -172,7 +172,7 @@ resource "aws_s3_bucket_policy" "hosting" {
 # DNS zone and records
 ################################################################################
 
-data "cloudflare_zone" "root" {
+data "cloudflare_zone" "nzsl_nz" {
   name = "nzsl.nz"
 }
 
@@ -184,7 +184,7 @@ module "cert" {
   source = "../../../modules/acm/validated_with_cloudflare"
 
   primary_domain_name     = "learn.nzsl.nz"
-  primary_domain_zone_id  = data.cloudflare_zone.root.id
+  primary_domain_zone_id  = data.cloudflare_zone.nzsl_nz.id
   secondary_domains       = {
     "learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id,
     "www.learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id
@@ -196,8 +196,13 @@ module "cert" {
   }
 }
 
-resource "cloudflare_record" "app" {
-  zone_id = data.cloudflare_zone.root.zone_id
+moved {
+  from = cloudflare_record.app
+  to = cloudflare_record.learn_nzsl_nz_cname
+}
+
+resource "cloudflare_record" "learn_nzsl_nz_cname" {
+  zone_id = data.cloudflare_zone.nzsl_nz.zone_id
   name    = "learn"
   value   = aws_cloudfront_distribution.cdn.domain_name
   type    = "CNAME"
@@ -205,7 +210,12 @@ resource "cloudflare_record" "app" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "app2" {
+moved {
+  from = cloudflare_record.app2
+  to = cloudflare_record.learnnzsl_nz_cname
+}
+
+resource "cloudflare_record" "learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "@"
   value   = aws_cloudfront_distribution.cdn.domain_name
@@ -214,7 +224,12 @@ resource "cloudflare_record" "app2" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "app3" {
+moved {
+  from = cloudflare_record.app3
+  to = cloudflare_record.www_learnnzsl_nz_cname
+}
+
+resource "cloudflare_record" "www_learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "www"
   value   = aws_cloudfront_distribution.cdn.domain_name

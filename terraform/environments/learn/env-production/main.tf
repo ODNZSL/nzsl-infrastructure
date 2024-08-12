@@ -12,6 +12,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -31,6 +36,8 @@ provider "aws" {
     tags = local.default_tags
   }
 }
+
+provider "cloudflare" {}
 
 ################################################################################
 # Module Local Variables
@@ -176,6 +183,19 @@ data "aws_acm_certificate" "cloudfront_cert" {
   domain = "learn.nzsl.nz"
 
   provider = aws.us-east-1
+}
+
+data "cloudflare_zone" "root" {
+  name = "nzsl.nz"
+}
+
+resource "cloudflare_record" "app" {
+  zone_id = data.cloudflare_zone.root.zone_id
+  name    = "learn"
+  value   = aws_cloudfront_distribution.cdn.domain_name
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
 }
 
 ################################################################################

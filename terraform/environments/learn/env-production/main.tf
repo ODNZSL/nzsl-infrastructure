@@ -176,11 +176,18 @@ data "cloudflare_zone" "root" {
   name = "nzsl.nz"
 }
 
+data "cloudflare_zone" "learnnzsl_nz" {
+  name = "learnnzsl.nz"
+}
+
 module "cert" {
   source = "../../../modules/acm/validated_with_cloudflare"
 
   primary_domain_name     = "learn.nzsl.nz"
   primary_domain_zone_id  = data.cloudflare_zone.root.id
+  secondary_domains       = {
+    "learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id
+  }
   name_prefix_pascal_case = "${local.app_name_pascal_case}CloudFront"
 
   providers = {
@@ -191,6 +198,15 @@ module "cert" {
 resource "cloudflare_record" "app" {
   zone_id = data.cloudflare_zone.root.zone_id
   name    = "learn"
+  value   = aws_cloudfront_distribution.cdn.domain_name
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_record" "app2" {
+  zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
+  name    = "@"
   value   = aws_cloudfront_distribution.cdn.domain_name
   type    = "CNAME"
   proxied = true
@@ -223,7 +239,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_root_object = "index.html"
 
   aliases = [
-    "learn.nzsl.nz"
+    "learn.nzsl.nz",
+    "learnnzsl.nz"
   ]
 
   default_cache_behavior {

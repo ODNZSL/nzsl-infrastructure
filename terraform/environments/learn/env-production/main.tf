@@ -196,11 +196,6 @@ module "cert" {
   }
 }
 
-moved {
-  from = cloudflare_record.app
-  to = cloudflare_record.learn_nzsl_nz_cname
-}
-
 resource "cloudflare_record" "learn_nzsl_nz_cname" {
   zone_id = data.cloudflare_zone.nzsl_nz.zone_id
   name    = "learn"
@@ -210,11 +205,6 @@ resource "cloudflare_record" "learn_nzsl_nz_cname" {
   ttl     = 1
 }
 
-moved {
-  from = cloudflare_record.app2
-  to = cloudflare_record.learnnzsl_nz_cname
-}
-
 resource "cloudflare_record" "learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "@"
@@ -222,11 +212,6 @@ resource "cloudflare_record" "learnnzsl_nz_cname" {
   type    = "CNAME"
   proxied = true
   ttl     = 1
-}
-
-moved {
-  from = cloudflare_record.app3
-  to = cloudflare_record.www_learnnzsl_nz_cname
 }
 
 resource "cloudflare_record" "www_learnnzsl_nz_cname" {

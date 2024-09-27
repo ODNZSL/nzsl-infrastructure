@@ -223,6 +223,36 @@ resource "cloudflare_record" "www_learnnzsl_nz_cname" {
   ttl     = 1
 }
 
+import {
+  id = "zone/${data.cloudflare_zone.learnnzsl_nz.zone_id}/6f108065d50c48359061ba52ed949360"
+  to = cloudflare_ruleset.redirect_to_learn_nzsl_nz
+}
+
+resource "cloudflare_ruleset" "redirect_to_learn_nzsl_nz" {
+  zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
+  name    = "default"
+  kind    = "zone"
+  phase   = "http_request_dynamic_redirect"
+
+  rules {
+    description = "Redirect to learn.nzsl.nz"
+    action      = "redirect"
+    enabled     = true
+    expression  = "true"
+
+    action_parameters {
+      from_value {
+        preserve_query_string = true
+        status_code           = 302
+
+        target_url {
+          expression = "concat(\"https://learn.nzsl.nz\",http.request.uri.path)"
+        }
+      }
+    }
+  }
+}
+
 ################################################################################
 # Cloudfront distribution
 ################################################################################

@@ -223,11 +223,6 @@ resource "cloudflare_record" "www_learnnzsl_nz_cname" {
   ttl     = 1
 }
 
-import {
-  id = "zone/${data.cloudflare_zone.learnnzsl_nz.zone_id}/6f108065d50c48359061ba52ed949360"
-  to = cloudflare_ruleset.redirect_to_learn_nzsl_nz
-}
-
 resource "cloudflare_ruleset" "redirect_to_learn_nzsl_nz" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "default"

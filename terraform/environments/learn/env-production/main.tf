@@ -172,15 +172,23 @@ resource "aws_s3_bucket_policy" "hosting" {
 # DNS zone and records
 ################################################################################
 
-data "cloudflare_zone" "root" {
+data "cloudflare_zone" "nzsl_nz" {
   name = "nzsl.nz"
+}
+
+data "cloudflare_zone" "learnnzsl_nz" {
+  name = "learnnzsl.nz"
 }
 
 module "cert" {
   source = "../../../modules/acm/validated_with_cloudflare"
 
   primary_domain_name     = "learn.nzsl.nz"
-  primary_domain_zone_id  = data.cloudflare_zone.root.id
+  primary_domain_zone_id  = data.cloudflare_zone.nzsl_nz.id
+  secondary_domains       = {
+    "learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id,
+    "www.learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id
+  }
   name_prefix_pascal_case = "${local.app_name_pascal_case}CloudFront"
 
   providers = {
@@ -188,13 +196,56 @@ module "cert" {
   }
 }
 
-resource "cloudflare_record" "app" {
-  zone_id = data.cloudflare_zone.root.zone_id
+resource "cloudflare_record" "learn_nzsl_nz_cname" {
+  zone_id = data.cloudflare_zone.nzsl_nz.zone_id
   name    = "learn"
   value   = aws_cloudfront_distribution.cdn.domain_name
   type    = "CNAME"
   proxied = true
   ttl     = 1
+}
+
+resource "cloudflare_record" "learnnzsl_nz_cname" {
+  zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
+  name    = "@"
+  value   = aws_cloudfront_distribution.cdn.domain_name
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_record" "www_learnnzsl_nz_cname" {
+  zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
+  name    = "www"
+  value   = aws_cloudfront_distribution.cdn.domain_name
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_ruleset" "redirect_to_learn_nzsl_nz" {
+  zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
+  name    = "default"
+  kind    = "zone"
+  phase   = "http_request_dynamic_redirect"
+
+  rules {
+    description = "Redirect to learn.nzsl.nz"
+    action      = "redirect"
+    enabled     = true
+    expression  = "true"
+
+    action_parameters {
+      from_value {
+        preserve_query_string = true
+        status_code           = 302
+
+        target_url {
+          expression = "concat(\"https://learn.nzsl.nz\",http.request.uri.path)"
+        }
+      }
+    }
+  }
 }
 
 ################################################################################
@@ -223,7 +274,9 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_root_object = "index.html"
 
   aliases = [
-    "learn.nzsl.nz"
+    "learn.nzsl.nz",
+    "learnnzsl.nz",
+    "www.learnnzsl.nz"
   ]
 
   default_cache_behavior {

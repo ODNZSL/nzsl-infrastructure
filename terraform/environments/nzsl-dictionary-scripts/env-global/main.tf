@@ -1,20 +1,3 @@
-terraform {
-  required_version = "~> 1.9.0"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.13"
-    }
-  }
-
-  backend "s3" {
-    bucket = "nzsl-infrastructure-terraform-state"
-    region = "ap-southeast-2"
-    key    = "nzsl-dictionary-scripts/env-global.tfstate"
-  }
-}
-
 provider "aws" {
   region = "ap-southeast-2"
 
@@ -66,14 +49,4 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dictionary_data" 
 resource "aws_s3_bucket_acl" "dictionary_data" {
   bucket = aws_s3_bucket.dictionary_data.id
   acl    = "private"
-}
-
-output "bucket_name" {
-  description = "The name of the S3 bucket for dictionary exports"
-  value       = aws_s3_bucket.dictionary_data.id
-}
-
-output "bucket_arn" {
-  description = "The ARN of the S3 bucket for dictionary exports"
-  value       = aws_s3_bucket.dictionary_data.arn
 }

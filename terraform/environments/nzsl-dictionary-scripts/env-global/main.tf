@@ -40,13 +40,38 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dictionary_data" 
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
-    bucket_key_enabled = true
   }
 }
 
+# Deny insecure requests to the bucket
+data "aws_iam_policy_document" "dictionary_data_bucket_access_policy" {
+  policy_id = "EnforceSSLRequests"
 
-# Set bucket ACL to private
-resource "aws_s3_bucket_acl" "dictionary_data" {
+  statement {
+    sid     = "AllowSSLRequestsOnly"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      identifiers = ["*"]
+      type        = "*"
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+
+      values = ["false"]
+    }
+
+    resources = [
+      aws_s3_bucket.dictionary_data.arn,
+      "${aws_s3_bucket.dictionary_data.arn}/*"
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "dictionary_data" {
   bucket = aws_s3_bucket.dictionary_data.id
-  acl    = "private"
+  policy = data.aws_iam_policy_document.dictionary_data_bucket_access_policy.json
 }

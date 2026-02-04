@@ -19,7 +19,6 @@ locals {
 # Create dedicated S3 bucket for dictionary exports
 resource "aws_s3_bucket" "dictionary_data" {
   bucket = local.bucket_name
-  tags   = local.default_tags
 }
 
 # Block all public access

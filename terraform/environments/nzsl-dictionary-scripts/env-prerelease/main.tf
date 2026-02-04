@@ -25,6 +25,7 @@ provider "aws" {
 
 locals {
   app_name_pascal_case = "NZSLDictionaryScriptsPrereleaseDeployment"
+  bucket_name          = "nzsl-dictionary-data"
   default_tags = {
     Environment      = "Prerelease"
     Client           = "DSRU"
@@ -41,16 +42,20 @@ data "aws_iam_policy_document" "write_only_access" {
       "s3:PutObjectAcl"
     ]
     resources = [
-      "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/prerelease/nzsl.db"
+      # New dedicated bucket
+      "arn:aws:s3:::${local.bucket_name}/prerelease/*",
+
+      # Legacy bucket access (temporary during migration)
+      "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/prerelease/*"
     ]
   }
 }
 
-
 module "bucket_access" {
-  source      = "../../../modules/readonly_bucket_access"
-  user_name   = "${local.app_name_pascal_case}User"
-  bucket_name = "nzsl-signbank-media-production"
+  source       = "../../../modules/readonly_bucket_access"
+  user_name    = "${local.app_name_pascal_case}User"
+  bucket_name  = local.bucket_name
+  default_tags = local.default_tags
 }
 
 module "github_oidc_role" {

@@ -16,10 +16,4 @@ terraform {
       version = "~> 3.0"
     }
   }
-
-  backend "s3" {
-    bucket = "nzsl-infrastructure-terraform-state"
-    region = "ap-southeast-2"
-    key    = "signbank/uat.tfstate"
-  }
 }

@@ -7,10 +7,4 @@ terraform {
       version = "~> 4.13"
     }
   }
-
-  backend "s3" {
-    bucket = "nzsl-infrastructure-terraform-state"
-    region = "ap-southeast-2"
-    key    = "nzsl-dictionary-scripts/env-prerelease.tfstate"
-  }
 }

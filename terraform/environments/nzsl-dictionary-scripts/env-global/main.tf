@@ -21,13 +21,26 @@ resource "aws_s3_bucket" "dictionary_data" {
   bucket = local.bucket_name
 }
 
-# Block all public access
+# Enable ACLs on the bucket (required to set public-read ACLs on objects)
+# By default, newer S3 buckets use "BucketOwnerEnforced" which disables ACLs entirely.
+# Setting this to "BucketOwnerPreferred" allows ACLs to be set on objects while
+# defaulting to bucket owner ownership when no ACL is specified.
+resource "aws_s3_bucket_ownership_controls" "dictionary_data" {
+  bucket = aws_s3_bucket.dictionary_data.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# Allow public ACLs on individual objects while blocking public bucket policies
+# This is because some dictionary exports are publicly accessible, but everything should be private by default
 resource "aws_s3_bucket_public_access_block" "dictionary_data" {
   bucket = aws_s3_bucket.dictionary_data.id
 
-  block_public_acls       = true
+  block_public_acls       = false
   block_public_policy     = true
-  ignore_public_acls      = true
+  ignore_public_acls      = false
   restrict_public_buckets = true
 }
 

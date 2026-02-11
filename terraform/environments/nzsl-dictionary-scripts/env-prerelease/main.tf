@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "write_only_access" {
     ]
     resources = [
       # New dedicated bucket
-      "arn:aws:s3:::${local.bucket_name}/prerelease/*",
+      "arn:aws:s3:::${local.bucket_name}/dictionary-exports/prerelease/*",
 
       # Legacy bucket access (temporary during migration)
       "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/prerelease/*"

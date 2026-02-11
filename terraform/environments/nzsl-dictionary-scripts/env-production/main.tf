@@ -54,7 +54,6 @@ module "bucket_access" {
   source       = "../../../modules/readonly_bucket_access"
   user_name    = "${local.app_name_pascal_case}User"
   bucket_name  = local.bucket_name
-  default_tags = local.default_tags
 }
 
 module "github_oidc_role" {

@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "dictionary_data_bucket_access_policy" {
     }
 
     resources = [
-      "${aws_s3_bucket.dictionary_data.arn}/public/*"
+      "${aws_s3_bucket.dictionary_data.arn}/*/public/*"
     ]
   }
 

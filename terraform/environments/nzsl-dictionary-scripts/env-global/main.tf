@@ -21,27 +21,13 @@ resource "aws_s3_bucket" "dictionary_data" {
   bucket = local.bucket_name
 }
 
-# Enable ACLs on the bucket (required to set public-read ACLs on objects)
-# By default, newer S3 buckets use "BucketOwnerEnforced" which disables ACLs entirely.
-# Setting this to "BucketOwnerPreferred" allows ACLs to be set on objects while
-# defaulting to bucket owner ownership when no ACL is specified.
+# Enable ACLs so objects can have public-read ACL set (but only in public folder per policy)
 resource "aws_s3_bucket_ownership_controls" "dictionary_data" {
   bucket = aws_s3_bucket.dictionary_data.id
 
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
-}
-
-# Allow public ACLs on individual objects while blocking public bucket policies
-# This is because some dictionary exports are publicly accessible, but everything should be private by default
-resource "aws_s3_bucket_public_access_block" "dictionary_data" {
-  bucket = aws_s3_bucket.dictionary_data.id
-
-  block_public_acls       = false
-  block_public_policy     = true
-  ignore_public_acls      = false
-  restrict_public_buckets = true
 }
 
 # Enable server-side encryption by default
@@ -55,12 +41,13 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dictionary_data" 
   }
 }
 
-# Deny insecure requests to the bucket
+# Bucket policy: enforce SSL and restrict ACL setting to public folder only
 data "aws_iam_policy_document" "dictionary_data_bucket_access_policy" {
-  policy_id = "EnforceSSLRequests"
+  policy_id = "DictionaryDataBucketPolicy"
 
+  # Deny insecure requests (HTTP) to the bucket
   statement {
-    sid     = "AllowSSLRequestsOnly"
+    sid     = "DenyInsecureTransport"
     effect  = "Deny"
     actions = ["s3:*"]
 
@@ -78,6 +65,56 @@ data "aws_iam_policy_document" "dictionary_data_bucket_access_policy" {
 
     resources = [
       aws_s3_bucket.dictionary_data.arn,
+      "${aws_s3_bucket.dictionary_data.arn}/*"
+    ]
+  }
+
+  # Allow setting public-read ACL on objects in the public folder only
+  # By only allowing public-read ACL for public/*, it is implicitly denied elsewhere
+  statement {
+    sid    = "AllowPublicReadAclInPublicFolder"
+    effect = "Allow"
+    actions = [
+      "s3:PutObjectAcl"
+    ]
+
+    principals {
+      identifiers = ["*"]
+      type        = "*"
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["public-read"]
+    }
+
+    resources = [
+      "${aws_s3_bucket.dictionary_data.arn}/public/*"
+    ]
+  }
+
+  # Allow setting other ACLs (private, bucket-owner-read, etc.) on any object
+  # This allows normal ACL management while restricting only public-read ACLs
+  statement {
+    sid    = "AllowOtherAcls"
+    effect = "Allow"
+    actions = [
+      "s3:PutObjectAcl"
+    ]
+
+    principals {
+      identifiers = ["*"]
+      type        = "*"
+    }
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["public-read"]
+    }
+
+    resources = [
       "${aws_s3_bucket.dictionary_data.arn}/*"
     ]
   }

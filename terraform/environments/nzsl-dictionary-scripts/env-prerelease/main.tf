@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "write_only_access" {
     ]
     resources = [
       # New dedicated bucket
-      "arn:aws:s3:::${local.bucket_name}/prerelease/*",
+      "arn:aws:s3:::${local.bucket_name}/dictionary-exports/prerelease/*",
 
       # Legacy bucket access (temporary during migration)
       "arn:aws:s3:::nzsl-signbank-media-production/dictionary-exports/prerelease/*"
@@ -55,7 +55,6 @@ module "bucket_access" {
   source       = "../../../modules/readonly_bucket_access"
   user_name    = "${local.app_name_pascal_case}User"
   bucket_name  = local.bucket_name
-  default_tags = local.default_tags
 }
 
 module "github_oidc_role" {

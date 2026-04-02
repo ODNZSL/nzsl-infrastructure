@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    bucket = "nzsl-infrastructure-terraform-state"
+    region = "ap-southeast-2"
+    key    = "nzsl-dictionary-scripts/env-global.tfstate"
+  }
+}
+
 provider "aws" {
   region = "ap-southeast-2"
 

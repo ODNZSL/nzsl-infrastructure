@@ -1,22 +1,8 @@
 terraform {
-  required_version = "~> 1.9.0"
-
   backend "s3" {
     region = "ap-southeast-2"
     bucket = "nzsl-infrastructure-terraform-state"
     key    = "learnnzsl-production"
-  }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 3.0"
-    }
   }
 }
 
@@ -183,11 +169,11 @@ data "cloudflare_zone" "learnnzsl_nz" {
 module "cert" {
   source = "../../../modules/acm/validated_with_cloudflare"
 
-  primary_domain_name     = "learn.nzsl.nz"
-  primary_domain_zone_id  = data.cloudflare_zone.nzsl_nz.id
-  secondary_domains       = {
-    "learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id,
-    "www.learnnzsl.nz": data.cloudflare_zone.learnnzsl_nz.id
+  primary_domain_name    = "learn.nzsl.nz"
+  primary_domain_zone_id = data.cloudflare_zone.nzsl_nz.id
+  secondary_domains = {
+    "learnnzsl.nz" : data.cloudflare_zone.learnnzsl_nz.id,
+    "www.learnnzsl.nz" : data.cloudflare_zone.learnnzsl_nz.id
   }
   name_prefix_pascal_case = "${local.app_name_pascal_case}CloudFront"
 

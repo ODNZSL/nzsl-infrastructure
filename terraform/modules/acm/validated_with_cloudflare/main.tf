@@ -31,7 +31,7 @@ resource "cloudflare_record" "cert" {
   }
 
   allow_overwrite = true
-  name            = each.value.name
+  name            = trimsuffix(each.value.name, ".")
   value           = trimsuffix(each.value.record, ".")
   ttl             = 1
   type            = each.value.type

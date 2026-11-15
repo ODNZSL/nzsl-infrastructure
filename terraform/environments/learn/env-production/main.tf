@@ -77,8 +77,8 @@ resource "aws_s3_bucket_public_access_block" "hosting" {
   block_public_acls  = true
   ignore_public_acls = true
 
-  block_public_policy     = false
-  restrict_public_buckets = false # todo: false
+  block_public_policy     = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket" "videos" {
@@ -109,30 +109,15 @@ resource "aws_s3_bucket_public_access_block" "videos" {
   restrict_public_buckets = true
 }
 
+locals {
+  cdn_buckets = {
+    (aws_s3_bucket.hosting.id) = aws_s3_bucket.hosting.arn
+    (aws_s3_bucket.videos.id)  = aws_s3_bucket.videos.arn
+  }
+}
+
 data "aws_iam_policy_document" "bucket_access_policy" {
-  policy_id = "EnforceSSLRequests"
-
-  statement {
-    sid     = "AllowAccessToSite"
-    effect  = "Allow"
-    actions = ["s3:GetObject"]
-
-    principals {
-      identifiers = ["*"]
-      type        = "*"
-    }
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-
-      values = ["true"]
-    }
-
-    resources = [
-      "${aws_s3_bucket.hosting.arn}/*"
-    ]
-  }
+  for_each = local.cdn_buckets
 
   statement {
     sid     = "AllowSSLRequestsOnly"
@@ -147,19 +132,17 @@ data "aws_iam_policy_document" "bucket_access_policy" {
     condition {
       test     = "Bool"
       variable = "aws:SecureTransport"
-
-      values = ["false"]
+      values   = ["false"]
     }
 
     resources = [
-      aws_s3_bucket.hosting.arn,
-      "${aws_s3_bucket.hosting.arn}/*"
+      each.value,
+      "${each.value}/*",
     ]
   }
 
   statement {
-    sid = "AllowCloudFrontServicePrincipal"
-
+    sid     = "AllowCloudFrontServicePrincipal"
     actions = ["s3:GetObject"]
 
     principals {
@@ -167,9 +150,7 @@ data "aws_iam_policy_document" "bucket_access_policy" {
       identifiers = ["cloudfront.amazonaws.com"]
     }
 
-    resources = [
-      "${aws_s3_bucket.hosting.arn}/*"
-    ]
+    resources = ["${each.value}/*"]
 
     condition {
       variable = "AWS:SourceArn"
@@ -179,60 +160,11 @@ data "aws_iam_policy_document" "bucket_access_policy" {
   }
 }
 
-data "aws_iam_policy_document" "bucket_access_policy2" {
-  statement {
-    sid     = "AllowSSLRequestsOnly"
-    effect  = "Deny"
-    actions = ["s3:*"]
+resource "aws_s3_bucket_policy" "bucket_access_policy" {
+  for_each = local.cdn_buckets
 
-    principals {
-      identifiers = ["*"]
-      type        = "*"
-    }
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-
-      values = ["false"]
-    }
-
-    resources = [
-      aws_s3_bucket.videos.arn,
-      "${aws_s3_bucket.videos.arn}/*",
-    ]
-  }
-
-  statement {
-    sid = "AllowCloudFrontServicePrincipal"
-
-    actions = ["s3:GetObject"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-
-    resources = [
-      "${aws_s3_bucket.videos.arn}/*"
-    ]
-
-    condition {
-      variable = "AWS:SourceArn"
-      test     = "StringEquals"
-      values   = [aws_cloudfront_distribution.cdn.arn]
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "hosting" {
-  bucket = aws_s3_bucket.hosting.id
-  policy = data.aws_iam_policy_document.bucket_access_policy.json
-}
-
-resource "aws_s3_bucket_policy" "videos" {
-  bucket = aws_s3_bucket.videos.id
-  policy = data.aws_iam_policy_document.bucket_access_policy2.json
+  bucket = each.key
+  policy = data.aws_iam_policy_document.bucket_access_policy[each.key].json
 }
 
 ################################################################################

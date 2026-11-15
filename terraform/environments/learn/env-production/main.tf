@@ -50,7 +50,7 @@ locals {
 }
 
 ################################################################################
-# S3 Bucket for hosting
+# S3 Buckets for hosting and videos
 ################################################################################
 
 resource "aws_s3_bucket" "hosting" {
@@ -79,6 +79,34 @@ resource "aws_s3_bucket_public_access_block" "hosting" {
 
   block_public_policy     = false
   restrict_public_buckets = false # todo: false
+}
+
+resource "aws_s3_bucket" "videos" {
+  bucket = "${local.app_name_kebab_case}-videos"
+
+  tags = {
+    Name = "${local.app_name_pascal_case}Videos"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "videos" {
+  bucket = aws_s3_bucket.videos.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "videos" {
+  bucket = aws_s3_bucket.videos.id
+
+  block_public_acls  = true
+  ignore_public_acls = true
+
+  block_public_policy     = true
+  restrict_public_buckets = true
 }
 
 data "aws_iam_policy_document" "bucket_access_policy" {
@@ -139,7 +167,55 @@ data "aws_iam_policy_document" "bucket_access_policy" {
       identifiers = ["cloudfront.amazonaws.com"]
     }
 
-    resources = ["${aws_s3_bucket.hosting.arn}/*"]
+    resources = [
+      "${aws_s3_bucket.hosting.arn}/*"
+    ]
+
+    condition {
+      variable = "AWS:SourceArn"
+      test     = "StringEquals"
+      values   = [aws_cloudfront_distribution.cdn.arn]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "bucket_access_policy2" {
+  statement {
+    sid     = "AllowSSLRequestsOnly"
+    effect  = "Deny"
+    actions = ["s3:*"]
+
+    principals {
+      identifiers = ["*"]
+      type        = "*"
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+
+      values = ["false"]
+    }
+
+    resources = [
+      aws_s3_bucket.videos.arn,
+      "${aws_s3_bucket.videos.arn}/*",
+    ]
+  }
+
+  statement {
+    sid = "AllowCloudFrontServicePrincipal"
+
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = [
+      "${aws_s3_bucket.videos.arn}/*"
+    ]
 
     condition {
       variable = "AWS:SourceArn"
@@ -152,6 +228,11 @@ data "aws_iam_policy_document" "bucket_access_policy" {
 resource "aws_s3_bucket_policy" "hosting" {
   bucket = aws_s3_bucket.hosting.id
   policy = data.aws_iam_policy_document.bucket_access_policy.json
+}
+
+resource "aws_s3_bucket_policy" "videos" {
+  bucket = aws_s3_bucket.videos.id
+  policy = data.aws_iam_policy_document.bucket_access_policy2.json
 }
 
 ################################################################################
@@ -245,12 +326,26 @@ resource "aws_cloudfront_origin_access_control" "s3" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_origin_access_control" "videos" {
+  name                              = aws_s3_bucket.videos.bucket_regional_domain_name
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_distribution" "cdn" {
   origin {
     domain_name = aws_s3_bucket.hosting.bucket_regional_domain_name
     origin_id   = aws_s3_bucket.hosting.bucket_regional_domain_name
 
     origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
+  }
+
+  origin {
+    domain_name = aws_s3_bucket.videos.bucket_regional_domain_name
+    origin_id   = aws_s3_bucket.videos.bucket_regional_domain_name
+
+    origin_access_control_id = aws_cloudfront_origin_access_control.videos.id
   }
 
   enabled             = true
@@ -264,6 +359,25 @@ resource "aws_cloudfront_distribution" "cdn" {
     "learnnzsl.nz",
     "www.learnnzsl.nz"
   ]
+
+  ordered_cache_behavior {
+    path_pattern     = "/videos/*"
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = aws_s3_bucket.videos.bucket_regional_domain_name
+
+    viewer_protocol_policy = "redirect-to-https"
+
+    compress = true
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+  }
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]

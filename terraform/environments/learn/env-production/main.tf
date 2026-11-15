@@ -110,30 +110,6 @@ resource "aws_s3_bucket_public_access_block" "videos" {
 }
 
 data "aws_iam_policy_document" "bucket_access_policy" {
-  policy_id = "EnforceSSLRequests"
-
-  statement {
-    sid     = "AllowAccessToSite"
-    effect  = "Allow"
-    actions = ["s3:GetObject"]
-
-    principals {
-      identifiers = ["*"]
-      type        = "*"
-    }
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-
-      values = ["true"]
-    }
-
-    resources = [
-      "${aws_s3_bucket.hosting.arn}/*"
-    ]
-  }
-
   statement {
     sid     = "AllowSSLRequestsOnly"
     effect  = "Deny"

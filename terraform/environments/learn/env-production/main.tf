@@ -77,8 +77,8 @@ resource "aws_s3_bucket_public_access_block" "hosting" {
   block_public_acls  = true
   ignore_public_acls = true
 
-  block_public_policy     = false
-  restrict_public_buckets = false # todo: false
+  block_public_policy     = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket" "videos" {

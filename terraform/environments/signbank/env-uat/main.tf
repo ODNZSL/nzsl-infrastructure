@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket = "nzsl-infrastructure-terraform-state"
     region = "ap-southeast-2"
-    key    = "signbank/uat.tfstate"
+    key    = "signbank/env-uat.tfstate"
   }
 }
 

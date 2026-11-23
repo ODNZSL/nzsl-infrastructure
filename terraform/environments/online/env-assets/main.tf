@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     region = "ap-southeast-2"
     bucket = "nzsl-infrastructure-terraform-state"
-    key    = "online/env-assets"
+    key    = "online/env-assets.tfstate"
 
     use_lockfile = true
   }

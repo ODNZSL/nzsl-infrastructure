@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     region = "ap-southeast-2"
     bucket = "nzsl-infrastructure-terraform-state"
-    key    = "learnnzsl-production"
+    key    = "learn/env-production.tfstate"
   }
 }
 

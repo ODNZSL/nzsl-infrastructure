@@ -32,7 +32,7 @@ resource "cloudflare_record" "cert" {
 
   allow_overwrite = true
   name            = trimsuffix(each.value.name, ".")
-  value           = trimsuffix(each.value.record, ".")
+  content         = trimsuffix(each.value.record, ".")
   ttl             = 1
   type            = each.value.type
   zone_id         = local.domain_to_zone_id[each.value.domain]

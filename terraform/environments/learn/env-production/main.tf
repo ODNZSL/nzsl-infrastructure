@@ -198,7 +198,7 @@ module "cert" {
 resource "cloudflare_record" "learn_nzsl_nz_cname" {
   zone_id = data.cloudflare_zone.nzsl_nz.zone_id
   name    = "learn"
-  value   = aws_cloudfront_distribution.cdn.domain_name
+  content = aws_cloudfront_distribution.cdn.domain_name
   type    = "CNAME"
   proxied = true
   ttl     = 1
@@ -207,7 +207,7 @@ resource "cloudflare_record" "learn_nzsl_nz_cname" {
 resource "cloudflare_record" "learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "@"
-  value   = aws_cloudfront_distribution.cdn.domain_name
+  content = aws_cloudfront_distribution.cdn.domain_name
   type    = "CNAME"
   proxied = true
   ttl     = 1
@@ -216,7 +216,7 @@ resource "cloudflare_record" "learnnzsl_nz_cname" {
 resource "cloudflare_record" "www_learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "www"
-  value   = aws_cloudfront_distribution.cdn.domain_name
+  content = aws_cloudfront_distribution.cdn.domain_name
   type    = "CNAME"
   proxied = true
   ttl     = 1

@@ -69,7 +69,7 @@ resource "heroku_domain" "app" {
 resource "cloudflare_record" "app" {
   zone_id = data.cloudflare_zone.root.zone_id
   name    = "signbank-uat"
-  value   = heroku_domain.app.cname
+  content = heroku_domain.app.cname
   type    = "CNAME"
   proxied = true
   ttl     = 1

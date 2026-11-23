@@ -1,19 +1,19 @@
 terraform {
-  required_version = "~> 1.9.0"
+  required_version = "~> 1.14.0"
 
   required_providers {
     heroku = {
       source  = "heroku/heroku"
-      version = "5.0.2"
+      version = "~> 5.0"
     }
     aws = {
       source  = "hashicorp/aws"
-      version = "4.13.0"
+      version = "~> 6.0"
     }
 
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
   }
 }

@@ -40,6 +40,9 @@ locals {
     Environment      = local.env_name_pascal_case
     ProvisioningTool = "Terraform"
   }
+
+  name_prefix_pascal_case = "${local.app_name_pascal_case}${local.env_name_pascal_case}"
+  name_prefix_kebab_case  = "${local.app_name_kebab_case}-${local.env_name_kebab_case}"
 }
 
 ################################################################################
@@ -95,6 +98,24 @@ data "aws_iam_policy_document" "assets_bucket_policy" {
       aws_s3_bucket.assets.arn,
       "${aws_s3_bucket.assets.arn}/*",
     ]
+  }
+
+  statement {
+    sid     = "AllowCloudFrontServicePrincipal"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.assets.arn}/*"]
+
+    condition {
+      variable = "AWS:SourceArn"
+      test     = "StringEquals"
+      values   = [aws_cloudfront_distribution.files.arn]
+    }
   }
 }
 

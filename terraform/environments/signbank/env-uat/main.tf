@@ -64,6 +64,8 @@ resource "heroku_app" "app" {
 resource "heroku_domain" "app" {
   app_id   = heroku_app.app.id
   hostname = "signbank-uat.${data.cloudflare_zone.root.name}"
+
+  sni_endpoint_id = "0517a9a2-6600-4402-9aa8-17b9e9dc1853"
 }
 
 resource "cloudflare_record" "app" {

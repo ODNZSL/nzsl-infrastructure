@@ -116,7 +116,7 @@ resource "aws_s3_bucket_versioning" "files" {
   }
 }
 
-data "aws_iam_policy_document" "bucket_access_policy" {
+data "aws_iam_policy_document" "files_bucket_policy" {
   statement {
     sid     = "AllowSSLRequestsOnly"
     effect  = "Deny"
@@ -138,4 +138,9 @@ data "aws_iam_policy_document" "bucket_access_policy" {
       "${aws_s3_bucket.files.arn}/*",
     ]
   }
+}
+
+resource "aws_s3_bucket_policy" "files" {
+  bucket = aws_s3_bucket.files.id
+  policy = data.aws_iam_policy_document.files_bucket_policy.json
 }

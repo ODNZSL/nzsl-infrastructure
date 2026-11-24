@@ -74,7 +74,7 @@ resource "aws_s3_bucket_public_access_block" "assets" {
   restrict_public_buckets = false
 }
 
-data "aws_iam_policy_document" "bucket_access_policy" {
+data "aws_iam_policy_document" "assets_bucket_policy" {
   statement {
     sid     = "AllowSSLRequestsOnly"
     effect  = "Deny"
@@ -96,4 +96,9 @@ data "aws_iam_policy_document" "bucket_access_policy" {
       "${aws_s3_bucket.assets.arn}/*",
     ]
   }
+}
+
+resource "aws_s3_bucket_policy" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  policy = data.aws_iam_policy_document.assets_bucket_policy.json
 }

@@ -172,11 +172,15 @@ resource "aws_s3_bucket_policy" "bucket_access_policy" {
 ################################################################################
 
 data "cloudflare_zone" "nzsl_nz" {
-  name = "nzsl.nz"
+  filter = {
+    name = "nzsl.nz"
+  }
 }
 
 data "cloudflare_zone" "learnnzsl_nz" {
-  name = "learnnzsl.nz"
+  filter = {
+    name = "learnnzsl.nz"
+  }
 }
 
 module "cert" {
@@ -195,7 +199,7 @@ module "cert" {
   }
 }
 
-resource "cloudflare_record" "learn_nzsl_nz_cname" {
+resource "cloudflare_dns_record" "learn_nzsl_nz_cname" {
   zone_id = data.cloudflare_zone.nzsl_nz.zone_id
   name    = "learn"
   content = aws_cloudfront_distribution.cdn.domain_name
@@ -204,7 +208,7 @@ resource "cloudflare_record" "learn_nzsl_nz_cname" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "learnnzsl_nz_cname" {
+resource "cloudflare_dns_record" "learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "@"
   content = aws_cloudfront_distribution.cdn.domain_name
@@ -213,7 +217,7 @@ resource "cloudflare_record" "learnnzsl_nz_cname" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "www_learnnzsl_nz_cname" {
+resource "cloudflare_dns_record" "www_learnnzsl_nz_cname" {
   zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
   name    = "www"
   content = aws_cloudfront_distribution.cdn.domain_name
@@ -223,28 +227,28 @@ resource "cloudflare_record" "www_learnnzsl_nz_cname" {
 }
 
 resource "cloudflare_ruleset" "redirect_to_learn_nzsl_nz" {
-  zone_id = data.cloudflare_zone.learnnzsl_nz.zone_id
+  zone_id = data.cloudflare_zone.learnnzsl_nz.id
   name    = "default"
   kind    = "zone"
   phase   = "http_request_dynamic_redirect"
 
-  rules {
+  rules = [{
     description = "Redirect to learn.nzsl.nz"
     action      = "redirect"
     enabled     = true
     expression  = "true"
 
-    action_parameters {
-      from_value {
+    action_parameters = {
+      from_value = {
         preserve_query_string = true
         status_code           = 302
 
-        target_url {
+        target_url = {
           expression = "concat(\"https://learn.nzsl.nz\",http.request.uri.path)"
         }
       }
     }
-  }
+  }]
 }
 
 ################################################################################

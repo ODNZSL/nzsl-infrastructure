@@ -9,10 +9,14 @@ domains listed on the certificate.
 
 ```terraform
 data "cloudflare_zone" "my-site_com" {
-  name = "my-site.com"
+  filter = {
+    name = "my-site.com"
+  }
 }
 data "cloudflare_zone" "my-site_org" {
-  name = "my-site.org"
+  filter = {
+    name = "my-site.org"
+  }
 }
 
 module "load_balancer_cert" {

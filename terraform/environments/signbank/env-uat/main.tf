@@ -40,7 +40,9 @@ provider "aws" {
 }
 
 data "cloudflare_zone" "root" {
-  name = "nzsl.nz"
+  filter = {
+    name = "nzsl.nz"
+  }
 }
 resource "heroku_app" "app" {
   name   = "nzsl-signbank-uat"
@@ -68,7 +70,7 @@ resource "heroku_domain" "app" {
   sni_endpoint_id = "0517a9a2-6600-4402-9aa8-17b9e9dc1853"
 }
 
-resource "cloudflare_record" "app" {
+resource "cloudflare_dns_record" "app" {
   zone_id = data.cloudflare_zone.root.zone_id
   name    = "signbank-uat"
   content = heroku_domain.app.cname

@@ -75,6 +75,24 @@ data "aws_iam_policy_document" "media_bucket_policy" {
       "${aws_s3_bucket.media.arn}/*",
     ]
   }
+
+  statement {
+    sid     = "AllowCloudFrontServicePrincipal"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.media.arn}/*"]
+
+    condition {
+      variable = "aws:SourceArn"
+      test     = "StringEquals"
+      values   = [aws_cloudfront_distribution.files.arn]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "files" {

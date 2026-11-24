@@ -7,9 +7,9 @@ locals {
 
 # Create an ACM Certificate validated by DNS
 resource "aws_acm_certificate" "cert" {
-  domain_name               = var.primary_domain_name
+  domain_name       = var.primary_domain_name
   subject_alternative_names = keys(var.secondary_domains)
-  validation_method         = "DNS"
+  validation_method = "DNS"
 
   tags = {
     Name = "${var.name_prefix_pascal_case}Certificate"
@@ -20,7 +20,7 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
-resource "cloudflare_record" "cert" {
+resource "cloudflare_dns_record" "cert" {
   for_each = {
     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
       domain = dvo.domain_name
@@ -30,16 +30,16 @@ resource "cloudflare_record" "cert" {
     }
   }
 
-  allow_overwrite = true
-  name            = trimsuffix(each.value.name, ".")
-  content         = trimsuffix(each.value.record, ".")
-  ttl             = 1
-  type            = each.value.type
-  zone_id         = local.domain_to_zone_id[each.value.domain]
-  proxied         = false
+
+  name = trimsuffix(each.value.name, ".")
+  content = trimsuffix(each.value.record, ".")
+  ttl     = 1
+  type    = each.value.type
+  zone_id = local.domain_to_zone_id[each.value.domain]
+  proxied = false
 }
 
 resource "aws_acm_certificate_validation" "cert" {
   certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for record in cloudflare_record.cert : record.hostname]
+  validation_record_fqdns = [for record in cloudflare_dns_record.cert : record.name]
 }

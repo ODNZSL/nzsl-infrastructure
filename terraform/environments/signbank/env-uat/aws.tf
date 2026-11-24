@@ -1,0 +1,56 @@
+provider "aws" {
+  region = "ap-southeast-2"
+}
+
+################################################################################
+# Media bucket
+################################################################################
+
+resource "aws_s3_bucket" "media" {
+  bucket = "nzsl-signbank-media-uat"
+  tags   = var.default_tags
+}
+
+resource "aws_s3_bucket_acl" "media" {
+  bucket = aws_s3_bucket.media.id
+  acl    = "private"
+}
+
+resource "aws_iam_user" "app" {
+  name = "signbank-app-uat"
+  tags = var.default_tags
+}
+
+resource "aws_iam_access_key" "app" {
+  user = aws_iam_user.app.name
+}
+
+resource "aws_iam_user_policy_attachment" "media" {
+  user       = aws_iam_user.app.name
+  policy_arn = aws_iam_policy.media.arn
+}
+
+resource "aws_iam_policy" "media" {
+  name        = "SignbankUATMediaBucketAccessPolicy"
+  description = "IAM policy for accessing the media bucket"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "SignbankUATMediaBucketAccess",
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:PutObject",
+          "s3:GetObjectAcl",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:PutObjectAcl"
+        ],
+        "Resource" : [
+          "${aws_s3_bucket.media.arn}/*"
+        ]
+      }
+    ]
+  })
+}

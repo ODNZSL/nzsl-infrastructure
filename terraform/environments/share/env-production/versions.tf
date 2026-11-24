@@ -6,5 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
+
+    heroku = {
+      source  = "heroku/heroku"
+      version = "~> 5.0"
+    }
   }
 }

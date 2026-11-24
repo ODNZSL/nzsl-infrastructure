@@ -3,6 +3,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
+locals {
+  files_cloudfront_domain = "signbank-uat-files.nzsl.nz"
+  files_cloudfront_key_id = "K3AWKGN7V8GWTU"
+}
+
 ################################################################################
 # CloudFront certificate
 ################################################################################
@@ -10,7 +15,7 @@ provider "aws" {
 module "cert" {
   source = "../../../modules/acm/validated_with_cloudflare"
 
-  primary_domain_name     = "signbank-uat-files.nzsl.nz"
+  primary_domain_name     = local.files_cloudfront_domain
   primary_domain_zone_id  = data.cloudflare_zone.nzsl_nz.id
   secondary_domains       = {}
   name_prefix_pascal_case = "${local.name_prefix_pascal_case}CloudFront"
@@ -23,6 +28,11 @@ module "cert" {
 ################################################################################
 # CloudFront distribution
 ################################################################################
+
+resource "aws_cloudfront_key_group" "files" {
+  name  = "${local.name_prefix_pascal_case}Files"
+  items = [local.files_cloudfront_key_id]
+}
 
 resource "aws_cloudfront_origin_access_control" "media" {
   name                              = aws_s3_bucket.media.bucket_regional_domain_name
@@ -46,7 +56,7 @@ resource "aws_cloudfront_distribution" "files" {
   http_version    = "http2and3"
   price_class     = "PriceClass_All"
 
-  aliases = ["signbank-uat-files.nzsl.nz"]
+  aliases = [local.files_cloudfront_domain]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -56,6 +66,8 @@ resource "aws_cloudfront_distribution" "files" {
     viewer_protocol_policy = "redirect-to-https"
 
     compress = true
+
+    trusted_key_groups = [aws_cloudfront_key_group.files.id]
 
     forwarded_values {
       query_string = false
@@ -86,7 +98,7 @@ resource "aws_cloudfront_distribution" "files" {
 
 resource "cloudflare_dns_record" "files" {
   zone_id = data.cloudflare_zone.nzsl_nz.zone_id
-  name    = "signbank-files-media"
+  name    = "signbank-uat-files"
   content = aws_cloudfront_distribution.files.domain_name
   type    = "CNAME"
   proxied = false

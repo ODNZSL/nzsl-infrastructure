@@ -13,6 +13,11 @@ resource "heroku_app" "app" {
     "heroku/ruby"
   ]
 
+  config_vars = {
+    CLOUDFRONT_KEY_PAIR_ID = local.files_cloudfront_key_id
+    CLOUDFRONT_DOMAIN      = local.files_cloudfront_domain
+  }
+
   organization {
     name = "nzsl"
   }

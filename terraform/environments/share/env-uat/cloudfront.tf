@@ -7,6 +7,11 @@ provider "aws" {
   }
 }
 
+locals {
+  files_cloudfront_domain = "share-uat-files.nzslshare.nz"
+  files_cloudfront_key_id = "K1RBTTE7LR2SUE"
+}
+
 ################################################################################
 # CloudFront certificate
 ################################################################################
@@ -14,7 +19,7 @@ provider "aws" {
 module "cert" {
   source = "../../../modules/acm/validated_with_cloudflare"
 
-  primary_domain_name     = "share-uat-files.nzslshare.nz"
+  primary_domain_name     = local.files_cloudfront_domain
   primary_domain_zone_id  = data.cloudflare_zone.nzslshare_nz.id
   secondary_domains       = {}
   name_prefix_pascal_case = "${local.name_prefix_pascal_case}CloudFront"
@@ -27,6 +32,11 @@ module "cert" {
 ################################################################################
 # CloudFront distribution
 ################################################################################
+
+resource "aws_cloudfront_key_group" "files" {
+  name  = "${local.name_prefix_pascal_case}Files"
+  items = [local.files_cloudfront_key_id]
+}
 
 resource "aws_cloudfront_origin_access_control" "files" {
   name                              = aws_s3_bucket.files.bucket
@@ -50,7 +60,7 @@ resource "aws_cloudfront_distribution" "files" {
   http_version    = "http2and3"
   price_class     = "PriceClass_All"
 
-  aliases = ["share-uat-files.nzslshare.nz"]
+  aliases = [local.files_cloudfront_domain]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -60,6 +70,8 @@ resource "aws_cloudfront_distribution" "files" {
     viewer_protocol_policy = "redirect-to-https"
 
     compress = true
+
+    trusted_key_groups = [aws_cloudfront_key_group.files.id]
 
     forwarded_values {
       query_string = false

@@ -53,6 +53,10 @@ resource "aws_s3_bucket_cors_configuration" "media" {
   }
 }
 
+data "aws_cloudfront_distribution" "dictionary" {
+  id = "EVOZL35ICTB6T"
+}
+
 data "aws_iam_policy_document" "media_bucket_policy" {
   statement {
     sid     = "AllowSSLRequestsOnly"
@@ -90,7 +94,37 @@ data "aws_iam_policy_document" "media_bucket_policy" {
     condition {
       variable = "aws:SourceArn"
       test     = "StringEquals"
-      values   = [aws_cloudfront_distribution.files.arn]
+      values = [
+        aws_cloudfront_distribution.files.arn,
+        data.aws_cloudfront_distribution.dictionary.arn
+      ]
+    }
+  }
+
+  statement {
+    sid     = "DenyDictionaryAccessToFilesNotTaggedPublic"
+    actions = ["s3:GetObject"]
+    effect  = "Deny"
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.media.arn}/*"]
+
+    condition {
+      variable = "aws:SourceArn"
+      test     = "StringEquals"
+      values   = [data.aws_cloudfront_distribution.dictionary.arn]
+    }
+
+    # deny access to files that have not been
+    # marked "public" with the "Visibility" tag
+    condition {
+      variable = "s3:ExistingObjectTag/Visibility"
+      test     = "StringNotEquals"
+      values   = ["public"]
     }
   }
 }

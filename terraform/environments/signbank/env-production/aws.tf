@@ -185,3 +185,35 @@ resource "aws_iam_policy" "media" {
     ]
   })
 }
+
+################################################################################
+# IAM role for S3 batch operations
+################################################################################
+
+resource "aws_iam_role" "s3_batch_operations" {
+  description = "Used for doing operations on S3 objects in bulk, such as adding or removing tags"
+  name        = "${local.name_prefix_pascal_case}S3BatchOperations"
+
+  assume_role_policy = data.aws_iam_policy_document.s3_batch_operations_trust_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "s3_batch_operations" {
+  role       = aws_iam_role.s3_batch_operations.name
+  policy_arn = data.aws_iam_policy.AmazonS3FullAccess.arn
+}
+
+data "aws_iam_policy" "AmazonS3FullAccess" {
+  name = "AmazonS3FullAccess"
+}
+
+data "aws_iam_policy_document" "s3_batch_operations_trust_policy" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["batchoperations.s3.amazonaws.com"]
+    }
+  }
+}

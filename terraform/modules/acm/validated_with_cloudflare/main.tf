@@ -7,9 +7,9 @@ locals {
 
 # Create an ACM Certificate validated by DNS
 resource "aws_acm_certificate" "cert" {
-  domain_name       = var.primary_domain_name
+  domain_name               = var.primary_domain_name
   subject_alternative_names = keys(var.secondary_domains)
-  validation_method = "DNS"
+  validation_method         = "DNS"
 
   tags = {
     Name = "${var.name_prefix_pascal_case}Certificate"
@@ -31,7 +31,7 @@ resource "cloudflare_dns_record" "cert" {
   }
 
 
-  name = trimsuffix(each.value.name, ".")
+  name    = trimsuffix(each.value.name, ".")
   content = trimsuffix(each.value.record, ".")
   ttl     = 1
   type    = each.value.type

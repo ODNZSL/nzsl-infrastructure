@@ -2,8 +2,8 @@
 
 Creates a validated certificate in AWS Certificate Manager (ACM) that can be
 used by other AWS services to allow HTTPS, and which is validated using DNS
-records that are automatically created in the respective CloudFlare zones for the
-domains listed on the certificate.
+records that are automatically created in the respective CloudFlare zones for
+the domains listed on the certificate.
 
 ## Usage
 

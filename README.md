@@ -44,8 +44,8 @@ tagged (by Terraform) with at least these tags:
 ### Public DNS
 
 - The primary DNS domain is `nzsl.nz` and is managed by Cloudflare.
-- DNS records should be recorded and managed using the [Cloudflare Terraform
-  provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs).
+- DNS records should be recorded and managed using the
+  [Cloudflare Terraform provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs).
 
 ## Load balancers and HTTPS/TLS
 
@@ -101,11 +101,11 @@ tagged (by Terraform) with at least these tags:
 
 ## Dependency monitoring
 
-Ruby, Python and JS package dependencies are audited with [Bundler
-Audit](https://github.com/rubysec/bundler-audit),
-[safety](https://pypi.org/project/safety/) and [npm
-audit](https://docs.npmjs.com/cli/audit) respectively. This auditing typically
-happens:
+Ruby, Python and JS package dependencies are audited with
+[Bundler Audit](https://github.com/rubysec/bundler-audit),
+[safety](https://pypi.org/project/safety/) and
+[npm audit](https://docs.npmjs.com/cli/audit) respectively. This auditing
+typically happens:
 
 1. Whenever new code is pushed
 2. Nightly as part of Ackama's in-house monitoring suite (results reported to

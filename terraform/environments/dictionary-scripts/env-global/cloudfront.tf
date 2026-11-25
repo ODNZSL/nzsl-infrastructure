@@ -47,6 +47,13 @@ resource "aws_cloudfront_origin_access_control" "files" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_origin_access_control" "dictionary_data" {
+  name                              = aws_s3_bucket.dictionary_data.bucket_regional_domain_name
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_distribution" "dictionary" {
   depends_on = [module.cert]
 
@@ -57,12 +64,40 @@ resource "aws_cloudfront_distribution" "dictionary" {
     origin_access_control_id = aws_cloudfront_origin_access_control.files.id
   }
 
+  origin {
+    domain_name = aws_s3_bucket.dictionary_data.bucket_regional_domain_name
+    origin_id   = aws_s3_bucket.dictionary_data.bucket_regional_domain_name
+
+    origin_access_control_id = aws_cloudfront_origin_access_control.dictionary_data.id
+
+    origin_path = "/dictionary-exports/public"
+  }
+
   enabled         = true
   is_ipv6_enabled = true
   http_version    = "http2and3"
   price_class     = "PriceClass_All"
 
   aliases = ["dictionary.nzsl.nz"]
+
+  ordered_cache_behavior {
+    path_pattern     = "/nzsl.db"
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = aws_s3_bucket.dictionary_data.bucket_regional_domain_name
+
+    viewer_protocol_policy = "redirect-to-https"
+
+    compress = true
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+  }
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]

@@ -146,6 +146,24 @@ data "aws_iam_policy_document" "dictionary_data_bucket_access_policy" {
       "${aws_s3_bucket.dictionary_data.arn}/*"
     ]
   }
+
+  statement {
+    sid     = "AllowCloudFrontAccessToPublicDictionary"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.dictionary_data.arn}/dictionary-exports/public/nzsl.db"]
+
+    condition {
+      variable = "aws:SourceArn"
+      test     = "StringEquals"
+      values   = [aws_cloudfront_distribution.dictionary.arn]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "dictionary_data" {

@@ -116,7 +116,10 @@ resource "aws_iam_policy" "media" {
           "s3:GetObjectAcl",
           "s3:GetObject",
           "s3:DeleteObject",
-          "s3:PutObjectAcl"
+          "s3:PutObjectAcl",
+          "s3:GetObjectTagging",
+          "s3:PutObjectTagging",
+          "s3:DeleteObjectTagging"
         ],
         "Resource" : [
           "${aws_s3_bucket.media.arn}/*"

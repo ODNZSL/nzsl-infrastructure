@@ -104,6 +104,8 @@ resource "aws_cloudfront_distribution" "dictionary" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = data.aws_s3_bucket.files.bucket_regional_domain_name
 
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.dictionary.id
+
     viewer_protocol_policy = "redirect-to-https"
 
     compress = true
@@ -128,6 +130,36 @@ resource "aws_cloudfront_distribution" "dictionary" {
     acm_certificate_arn      = module.cert.arn
     minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
+  }
+}
+
+resource "aws_cloudfront_response_headers_policy" "dictionary" {
+  name = "${local.name_prefix_pascal_case}CORS"
+
+  cors_config {
+    access_control_allow_credentials = false
+
+    access_control_allow_headers {
+      items = ["*"]
+    }
+
+    access_control_allow_methods {
+      items = ["GET", "HEAD"]
+    }
+
+    access_control_allow_origins {
+      items = [
+        "http://localhost:3000",
+        "https://www.nzslshare.nz",
+        "https://uat.nzslshare.nz",
+        "https://www.nzsl.nz",
+        "https://nzsl-staging.herokuapp.com"
+      ]
+    }
+
+    access_control_max_age_sec = 3000
+
+    origin_override = true
   }
 }
 

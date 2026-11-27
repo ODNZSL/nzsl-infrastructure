@@ -53,6 +53,10 @@ resource "aws_s3_bucket_cors_configuration" "media" {
   }
 }
 
+data "aws_cloudfront_distribution" "dictionary" {
+  id = "EVOZL35ICTB6T"
+}
+
 data "aws_iam_policy_document" "media_bucket_policy" {
   statement {
     sid     = "AllowSSLRequestsOnly"
@@ -74,6 +78,54 @@ data "aws_iam_policy_document" "media_bucket_policy" {
       aws_s3_bucket.media.arn,
       "${aws_s3_bucket.media.arn}/*",
     ]
+  }
+
+  statement {
+    sid     = "AllowCloudFrontServicePrincipal"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.media.arn}/*"]
+
+    condition {
+      variable = "aws:SourceArn"
+      test     = "StringEquals"
+      values = [
+        aws_cloudfront_distribution.files.arn,
+        data.aws_cloudfront_distribution.dictionary.arn
+      ]
+    }
+  }
+
+  statement {
+    sid     = "DenyDictionaryAccessToFilesNotTaggedPublic"
+    actions = ["s3:GetObject"]
+    effect  = "Deny"
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.media.arn}/*"]
+
+    condition {
+      variable = "aws:SourceArn"
+      test     = "StringEquals"
+      values   = [data.aws_cloudfront_distribution.dictionary.arn]
+    }
+
+    # deny access to files that have not been
+    # marked "public" with the "Visibility" tag
+    condition {
+      variable = "s3:ExistingObjectTag/Visibility"
+      test     = "StringNotEquals"
+      values   = ["public"]
+    }
   }
 }
 
@@ -124,7 +176,10 @@ resource "aws_iam_policy" "media" {
           "s3:GetObjectAcl",
           "s3:GetObject",
           "s3:DeleteObject",
-          "s3:PutObjectAcl"
+          "s3:PutObjectAcl",
+          "s3:GetObjectTagging",
+          "s3:PutObjectTagging",
+          "s3:DeleteObjectTagging"
         ],
         "Resource" : [
           "${aws_s3_bucket.media.arn}/*"
@@ -132,4 +187,36 @@ resource "aws_iam_policy" "media" {
       }
     ]
   })
+}
+
+################################################################################
+# IAM role for S3 batch operations
+################################################################################
+
+resource "aws_iam_role" "s3_batch_operations" {
+  description = "Used for doing operations on S3 objects in bulk, such as adding or removing tags"
+  name        = "${local.name_prefix_pascal_case}S3BatchOperations"
+
+  assume_role_policy = data.aws_iam_policy_document.s3_batch_operations_trust_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "s3_batch_operations" {
+  role       = aws_iam_role.s3_batch_operations.name
+  policy_arn = data.aws_iam_policy.AmazonS3FullAccess.arn
+}
+
+data "aws_iam_policy" "AmazonS3FullAccess" {
+  name = "AmazonS3FullAccess"
+}
+
+data "aws_iam_policy_document" "s3_batch_operations_trust_policy" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["batchoperations.s3.amazonaws.com"]
+    }
+  }
 }

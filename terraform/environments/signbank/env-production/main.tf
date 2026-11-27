@@ -16,3 +16,25 @@ variable "default_tags" {
     ProvisioningTool = "Terraform"
   }
 }
+
+################################################################################
+# Module Local Variables
+################################################################################
+
+locals {
+  # Application names should be kept relatively short as they're used to prefix
+  # resources which regularly have low limits on name length.
+  #
+  # Generally we try and go with snappy pseudonyms or acronyms where possible
+  app_name_kebab_case  = "signbank"
+  app_name_pascal_case = "Signbank"
+
+  env_name_kebab_case  = "production"
+  env_name_pascal_case = "Production"
+
+  client_name_kebab_case  = "nzsl"
+  client_name_pascal_case = "NZSL"
+
+  name_prefix_pascal_case = "${local.app_name_pascal_case}${local.env_name_pascal_case}"
+  name_prefix_kebab_case  = "${local.app_name_kebab_case}-${local.env_name_kebab_case}"
+}

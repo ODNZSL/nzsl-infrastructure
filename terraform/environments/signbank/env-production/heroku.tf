@@ -6,9 +6,14 @@ resource "heroku_app" "app" {
   stack  = "container"
 
   config_vars = {
-    "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id,
-    "ALLOWED_HOSTS"           = "signbank.${data.cloudflare_zone.nzsl_nz.name}"
-    "DJANGO_SETTINGS_MODULE"  = "signbank.settings.production"
+    AWS_CLOUDFRONT_KEY_PAIR_ID = local.files_cloudfront_key_id
+    AWS_CLOUDFRONT_DOMAIN      = local.files_cloudfront_domain
+    AWS_STORAGE_BUCKET_NAME    = aws_s3_bucket.media.id,
+    ALLOWED_HOSTS              = "signbank.${data.cloudflare_zone.nzsl_nz.name}"
+    DJANGO_SETTINGS_MODULE     = "signbank.settings.production"
+
+    # DICTIONARY_VIDEOS_HOST = "https://nzsl-signbank-media-production.s3.ap-southeast-2.amazonaws.com/"
+    DICTIONARY_VIDEOS_HOST = "https://dictionary.nzsl.nz/"
   }
 
   sensitive_config_vars = {

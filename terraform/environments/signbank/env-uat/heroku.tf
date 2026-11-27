@@ -6,7 +6,9 @@ resource "heroku_app" "app" {
   stack  = "container"
 
   config_vars = {
-    "AWS_STORAGE_BUCKET_NAME" = aws_s3_bucket.media.id
+    AWS_CLOUDFRONT_KEY_PAIR_ID = local.files_cloudfront_key_id
+    AWS_CLOUDFRONT_DOMAIN      = local.files_cloudfront_domain
+    AWS_STORAGE_BUCKET_NAME    = aws_s3_bucket.media.id
   }
 
   sensitive_config_vars = {

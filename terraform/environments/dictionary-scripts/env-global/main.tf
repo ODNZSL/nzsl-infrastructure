@@ -14,7 +14,24 @@ provider "aws" {
   }
 }
 
+################################################################################
+# Module Local Variables
+################################################################################
+
 locals {
+  # Application names should be kept relatively short as they're used to prefix
+  # resources which regularly have low limits on name length.
+  #
+  # Generally we try and go with snappy pseudonyms or acronyms where possible
+  app_name_kebab_case  = "dictionary"
+  app_name_pascal_case = "Dictionary"
+
+  env_name_kebab_case  = "global"
+  env_name_pascal_case = "Global"
+
+  client_name_kebab_case  = "nzsl"
+  client_name_pascal_case = "NZSL"
+
   bucket_name = "nzsl-dictionary-data"
   default_tags = {
     Environment      = "Global"
@@ -22,6 +39,9 @@ locals {
     Project          = "NZSL Dictionary Scripts"
     ProvisioningTool = "Terraform"
   }
+
+  name_prefix_pascal_case = "${local.app_name_pascal_case}${local.env_name_pascal_case}"
+  name_prefix_kebab_case  = "${local.app_name_kebab_case}-${local.env_name_kebab_case}"
 }
 
 # Create dedicated S3 bucket for dictionary exports
@@ -125,6 +145,24 @@ data "aws_iam_policy_document" "dictionary_data_bucket_access_policy" {
     resources = [
       "${aws_s3_bucket.dictionary_data.arn}/*"
     ]
+  }
+
+  statement {
+    sid     = "AllowCloudFrontAccessToPublicDictionary"
+    actions = ["s3:GetObject"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = ["${aws_s3_bucket.dictionary_data.arn}/dictionary-exports/public/nzsl.db"]
+
+    condition {
+      variable = "aws:SourceArn"
+      test     = "StringEquals"
+      values   = [aws_cloudfront_distribution.dictionary.arn]
+    }
   }
 }
 
